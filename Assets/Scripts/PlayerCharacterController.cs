@@ -6,36 +6,42 @@ using UnityEngine;
 
 public class PlayerCharacterController : MonoBehaviour
 {
-    public float speed = 6.0f;
-    public float jumpSpeed = 8.0f;
-    public float gravity = 20.0f;
+    public float Speed = 5f;
+    public float JumpHeight = 2f;
+    public float GroundDistance = 0.2f;
+    public float DashDistance = 5f;
+    public LayerMask Ground;
+    public Rigidbody _body;
+    
+    private Vector3 _inputs = Vector3.zero;
+    private bool _isGrounded = true;
+    private Transform _groundChecker;
 
-    CharacterController characterController;
-
-    private Vector3 moveDirection = Vector3.zero;
-    // Start is called before the first frame update
     void Start()
     {
-        characterController = GetComponent<CharacterController>();
+        _groundChecker = transform.GetChild(0);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (characterController.isGrounded)
+        _isGrounded = Physics.CheckSphere(_groundChecker.position, GroundDistance, Ground, QueryTriggerInteraction.Ignore);
+
+
+        _inputs = Vector3.zero;
+        _inputs.x = Input.GetAxis("Horizontal");
+        _inputs.z = Input.GetAxis("Vertical");
+        if (_inputs != Vector3.zero)
+            transform.forward = _inputs;
+
+        if (Input.GetButtonDown("Jump") && _isGrounded)
         {
-            moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0.0f, Input.GetAxis("Vertical"));
-            moveDirection *= speed;
-            
-            if (Input.GetButton("Jump"))
-            {
-                moveDirection.y = jumpSpeed;
-            }
+            _body.AddForce(Vector3.up * Mathf.Sqrt(JumpHeight * -2f * Physics.gravity.y), ForceMode.VelocityChange);
         }
+    }
 
 
-        moveDirection.y -= gravity * Time.deltaTime;
-        
-        characterController.Move(moveDirection * Time.deltaTime);
+    void FixedUpdate()
+    {
+        _body.MovePosition(_body.position + _inputs * Speed * Time.fixedDeltaTime);
     }
 }
